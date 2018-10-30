@@ -64,25 +64,25 @@ server <- function(input, output, session) {
   
   outputOptions(output, "panelStatus", suspendWhenHidden = FALSE)
   
-  ## read csv file of holidays ---------------------------------
-  holidays_upload <- reactive({
-    if (is.null(input$holidays_file)) h <- NULL
-    else h <- read.csv(input$holidays_file$datapath, header = TRUE) 
-    return(h)
-  })
-  
-  ## output: table of 1st 6 rows of uploaded holidays ------------------
-  output$uploaded_holidays <- renderTable({
-    req(holidays_upload)
-    head(holidays_upload())
-  })
-  
-  ## panel status depending on holidays ------------------------
-  output$panelStatus_holidays <- reactive({
-    !(is.null(holidays_upload()))
-  })
-  
-  outputOptions(output, "panelStatus_holidays", suspendWhenHidden = FALSE)
+  # ## read csv file of holidays ---------------------------------
+  # holidays_upload <- reactive({
+  #   if (is.null(input$holidays_file)) h <- NULL
+  #   else h <- read.csv(input$holidays_file$datapath, header = TRUE) 
+  #   return(h)
+  # })
+  # 
+  # ## output: table of 1st 6 rows of uploaded holidays ------------------
+  # output$uploaded_holidays <- renderTable({
+  #   req(holidays_upload)
+  #   head(holidays_upload())
+  # })
+  # 
+  # ## panel status depending on holidays ------------------------
+  # output$panelStatus_holidays <- reactive({
+  #   !(is.null(holidays_upload()))
+  # })
+  # 
+  # outputOptions(output, "panelStatus_holidays", suspendWhenHidden = FALSE)
   
   ## Toggle submit button state according to data ---------------
   observe({
@@ -119,7 +119,7 @@ server <- function(input, output, session) {
                   n.changepoints = input$n.changepoints,
                   yearly.seasonality = input$yearly,
                   weekly.seasonality = input$monthly,
-                  holidays = holidays_upload(),
+                  # holidays = holidays_upload(),
                   seasonality.prior.scale = input$seasonality_scale,
                   changepoint.prior.scale = input$changepoint_scale,
                   holidays.prior.scale = input$holidays_scale,
@@ -140,7 +140,7 @@ server <- function(input, output, session) {
     make_future_dataframe(p_model(),
                           periods = input$periods,
                           freq = input$freq,
-                          include_history = input$include_history)
+                          include_history = TRUE)
   })
   
   ## dup reactive future--------------------------
@@ -183,7 +183,7 @@ server <- function(input, output, session) {
   output$ts_plot <- renderPlot({
     # req(logistic_check()!="error")
     g <- plot(p_model(), forecast())
-    g + theme_classic()
+    g + theme_minimal()
   })
   
   ## output:plot prophet components --------------
@@ -199,9 +199,9 @@ server <- function(input, output, session) {
   })
   
   ## error msg for holidays ------------------------
-  output$msg_holidays <- renderUI({
-    if (c("ds","holiday") %in% names(holidays_upload()) %>% mean != 1)
-      "Invalid Input: dataframe should have at least two columns named (ds & holiday)"
-  })
+  # output$msg_holidays <- renderUI({
+  #   if (c("ds","holiday") %in% names(holidays_upload()) %>% mean != 1)
+  #     "Invalid Input: dataframe should have at least two columns named (ds & holiday)"
+  # })
   
 }

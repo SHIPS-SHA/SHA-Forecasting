@@ -8,13 +8,13 @@ library(prophet)
 library(ggplot2)
 
 ui <- dashboardPage(
-  dashboardHeader(title = "Prophet Explorer"),
+  dashboardHeader(title = "SHA-Forecasting Tool"),
   
   ## Sidebar ------------------------------------
   dashboardSidebar(
     sidebarMenu(
       menuItem("About", tabName = "About"),
-      menuItem("Prophet Explorer", tabName = "Prophet")
+      menuItem("Forecasting Tool", tabName = "Forecast")
     )
   ),
   
@@ -38,7 +38,7 @@ ui <- dashboardPage(
       ### ABout ----------------------------
       tabItem(tabName = "About",
               fluidRow(
-                box(width=12,
+                box(width = 12,
                     infoBox(width = 12,
                             title = "",
                             value = includeHTML("./www/about.html"),
@@ -48,13 +48,13 @@ ui <- dashboardPage(
                            a(actionButton(inputId = "start",
                                           label = "Get Started",
                                           style = "font-size: 150%'"),
-                             onclick = "openTab('Prophet')",
-                             style="cursor: pointer; font-size: 300%;")))
+                             onclick = "openTab('Forecast')",
+                             style = "cursor: pointer; font-size: 300%;")))
                 
               )
       ),
       ### Prophet ----------------------------
-      tabItem(tabName = "Prophet",
+      tabItem(tabName = "Forecast",
               fluidRow(
                 box(width = 12,
                     tabsetPanel(id = "inTabset",
@@ -82,21 +82,17 @@ ui <- dashboardPage(
                                                   uiOutput("msg_main_data")
                                                   
                                            ),
-                                           ## upload holidays -----------------
+                                           ## predict parameters --------------------
                                            column(width = 6,
-                                                  tags$h4("Holidays (Optional)"),
-                                                  helpText("A valid dataframe contains at least 2 colums (ds, holiday)"),
-                                                  fileInput("holidays_file","Upload CSV File",
-                                                            accept = c(
-                                                              "text/csv",
-                                                              "text/comma-separated-values,text/plain",
-                                                              ".csv")),
-                                                  conditionalPanel(condition = 'output.panelStatus_holidays',
-                                                                   helpText("First 6 rows of the uploaded holidays ")),
-                                                  tableOutput("uploaded_holidays")
-                                                  
-                                                  ### error msg if holidays is not valid 
-                                                  # uiOutput("msg_holidays")
+                                                  tags$h3("Forecasting Parameters"),
+                                                  ### paramater: periods
+                                                  numericInput("periods",
+                                                               "# Forecasted Periods",
+                                                               value = 90),
+                                                  ### parameter: freq
+                                                  selectInput("freq", "Forecast Frequency",
+                                                              choices = c('day', 'week', 'month', 
+                                                                          'quarter','year'))
                                            )
                                          ),
                                          ## Next 1 ---------------
@@ -108,52 +104,80 @@ ui <- dashboardPage(
                                 ## TAB 2 : Set Parameters -----------------------------------
                                 tabPanel(title = "Set Parameters", value = "panel2",
                                          fluidRow(
-                                           column(width = 8,
-                                                  column(width = 8, offset = 2,
+                                           column(width = 12,
+                                                  column(width = 9, 
+                                                         offset = 6,
                                                          tags$h3("Prophet Parameters")),
                                                   column(width = 6,
-                                                         
-                                                         radioButtons("growth","growth",
-                                                                      c('linear','logistic'), inline = TRUE),
+                                                         radioButtons("growth",
+                                                                      "growth",
+                                                                      c('linear',
+                                                                        'logistic'), 
+                                                                      inline = TRUE),
                                                          
                                                          ### parameter: yearly.seasonality
-                                                         checkboxInput("yearly","yearly.seasonality", value = TRUE),
+                                                         checkboxInput("yearly",
+                                                                       "yearly.seasonality", 
+                                                                       value = TRUE),
                                                          
                                                          ### parameter: weekly.seasonality 
-                                                         checkboxInput("monthly","weekly.seasonality", value = TRUE),
+                                                         checkboxInput("monthly",
+                                                                       "weekly.seasonality", 
+                                                                       value = TRUE),
                                                          ### parameter: n.changepoints
-                                                         numericInput("n.changepoints","n.changepoints", value = 25),
+                                                         numericInput("n.changepoints",
+                                                                      "n.changepoints", 
+                                                                      value = 25),
                                                          
                                                          ### parameter: seasonality.prior.scale
-                                                         numericInput("seasonality_scale","seasonality.prior.scale", value = 10),
+                                                         numericInput("seasonality_scale",
+                                                                      "seasonality.prior.scale", 
+                                                                      value = 10),
                                                          
                                                          ### parameter: changepoint.prior.scale
-                                                         numericInput("changepoint_scale","changepoint.prior.scale", value = 0.05, step = 0.01)),
+                                                         numericInput("changepoint_scale",
+                                                                      "changepoint.prior.scale", 
+                                                                      value = 0.05, 
+                                                                      step = 0.01)),
                                                   column(width = 6,
                                                          
                                                          ### parameter: holidays.prior.scale
-                                                         numericInput("holidays_scale","holidays.prior.scale", value = 10),
+                                                         numericInput("holidays_scale",
+                                                                      "holidays.prior.scale", 
+                                                                      value = 10),
                                                          
                                                          ### parameter: mcmc.samples
-                                                         numericInput("mcmc.samples", "mcmc.samples", value = 0),
+                                                         numericInput("mcmc.samples", 
+                                                                      "mcmc.samples", 
+                                                                      value = 0),
                                                          
                                                          ### parameter: interval.width
-                                                         numericInput("interval.width", "interval.width", value= 0.8, step = 0.1),
+                                                         numericInput("interval.width", 
+                                                                      "interval.width", 
+                                                                      value = 0.8, 
+                                                                      step = 0.1),
                                                          ### parameter: uncertainty.samples
-                                                         numericInput("uncertainty.samples","uncertainty.samples", value = 1000))
+                                                         numericInput("uncertainty.samples",
+                                                                      "uncertainty.samples", 
+                                                                      value = 1000))
                                                   
-                                           ),
-                                           ## predict parameters --------------------
-                                           column(width = 4,
-                                                  tags$h3("Predict Parameters"),
-                                                  ### paramater: periods
-                                                  numericInput("periods","periods",value=365),
-                                                  ### parameter: freq
-                                                  selectInput("freq","freq",
-                                                              choices = c('day', 'week', 'month', 'quarter','year')),
-                                                  ### parameter: include_history
-                                                  checkboxInput("include_history","include_history", value = TRUE)
-                                           )
+                                           ) #,
+                                           # ## predict parameters --------------------
+                                           # column(width = 4,
+                                           #        tags$h3("Predict Parameters"),
+                                           #        ### paramater: periods
+                                           #        numericInput("periods",
+                                           #                     "periods",
+                                           #                     value = 365),
+                                           #        ### parameter: freq
+                                           #        selectInput("freq","freq",
+                                           #                    choices = c('day', 'week', 'month', 
+                                           #                                'quarter','year')),
+                                           #        ### parameter: include_history
+                                           #        checkboxInput("include_history",
+                                           #                      "include_history", 
+                                           #                      value = TRUE)
+                                           # )
                                          )
                                          ,
                                          ## Back/Next 2 --------------------------
@@ -166,12 +190,13 @@ ui <- dashboardPage(
                                                                style = "width:100%; font-size:200%"))
                                          )
                                 ),
-                                ## TAB 3 : Fit Propher Model ----------------------
-                                tabPanel(title = "Fit Model", value = "panel3", 
+                                ## TAB 3 : Fit Prophet Model ----------------------
+                                tabPanel(title = "Fit Forecasting Model", value = "panel3", 
                                          fluidRow(
                                            # box(width = 12, 
                                            column(width = 12,
-                                                  shinyjs::disabled(actionButton("plot_btn2", "Fit Prophet Model",
+                                                  shinyjs::disabled(actionButton("plot_btn2", 
+                                                                                 "Fit Forecasting Model",
                                                                                  style = "width:30%; margin-top: 25px; margin-bottom: 50px; font-size:150%; ")
                                                   )
                                            )
