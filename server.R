@@ -107,25 +107,24 @@ server <- function(input, output, session) {
       validate(
         need(try("cap" %in% names(dat())),
              "Error: for logistic 'growth', the input dataframe must have a column 'cap' that specifies the capacity at each 'ds'."))
-      
     }
     
-    datx <- dat() %>% 
-      mutate(y = log(y))
+    # datx <- dat() %>% 
+    #   mutate(y = log(y))
     
-    kk <- prophet(datx,
+    kk <- prophet(dat,
                   growth = input$growth,
-                  changepoints = NULL,
-                  n.changepoints = input$n.changepoints,
-                  yearly.seasonality = input$yearly,
-                  weekly.seasonality = input$monthly,
+                  # changepoints = NULL,
+                  # n.changepoints = input$n.changepoints,
+                  # yearly.seasonality = input$yearly,
+                  # weekly.seasonality = input$monthly,
                   # holidays = holidays_upload(),
-                  seasonality.prior.scale = input$seasonality_scale,
-                  changepoint.prior.scale = input$changepoint_scale,
-                  holidays.prior.scale = input$holidays_scale,
-                  mcmc.samples = input$mcmc.samples,
-                  interval.width = input$interval.width,
-                  uncertainty.samples = input$uncertainty.samples,
+                  # seasonality.prior.scale = input$seasonality_scale,
+                  # changepoint.prior.scale = input$changepoint_scale,
+                  # holidays.prior.scale = input$holidays_scale,
+                  # mcmc.samples = input$mcmc.samples,
+                  # interval.width = input$interval.width,
+                  # uncertainty.samples = input$uncertainty.samples,
                   fit = TRUE)
     
     return(kk)
@@ -183,13 +182,14 @@ server <- function(input, output, session) {
   output$ts_plot <- renderPlot({
     # req(logistic_check()!="error")
     g <- plot(p_model(), forecast())
-    g + theme_minimal()
+    g + theme_minimal() + expand_limits(y = 0)
   })
   
   ## output:plot prophet components --------------
   output$prophet_comp_plot <- renderPlot({
     # req(logistic_check()!="error")
-    prophet_plot_components(p_model(), forecast())
+    prophet_plot_components(p_model(), forecast(), 
+                            yearly_start = 31 + 28 + 31)
   })
   
   ## error msg for main dataset------------------------

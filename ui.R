@@ -6,6 +6,10 @@ library(shinyjs)
 library(dplyr)
 library(prophet)
 library(ggplot2)
+library(rships)
+
+# Set ggplot theme
+theme_set(theme_minimal())
 
 ui <- dashboardPage(
   dashboardHeader(title = "SHA-Forecasting Tool"),
@@ -77,7 +81,6 @@ ui <- dashboardPage(
                                                                    helpText("First 6 rows of the uploaded data")),
                                                   
                                                   tableOutput("uploaded_data"),
-                                                  
                                                   ### error msg if main dataset is not valid 
                                                   uiOutput("msg_main_data")
                                                   
@@ -201,22 +204,6 @@ ui <- dashboardPage(
                                                   )
                                            )
                                          ),
-                                         
-                                         ## Results Box : collapsible ------------------
-                                         fluidRow(
-                                           conditionalPanel("input.plot_btn2",
-                                                            box(width = 12, collapsible = TRUE, 
-                                                                title = "Results",
-                                                                
-                                                                div(id = "output-container3",
-                                                                    tags$img(src = "spinner.gif",
-                                                                             id = "loading-spinner"),
-                                                                    DT::dataTableOutput("data")),
-                                                                conditionalPanel("output.data",
-                                                                                 uiOutput("dw_button")
-                                                                )
-                                                            )
-                                           )),
                                          ## Plots Box : collapsible ------------------
                                          fluidRow( 
                                            conditionalPanel("input.plot_btn2",
@@ -243,6 +230,21 @@ ui <- dashboardPage(
                                                                            )
                                                                   )
                                                                 )))),
+                                         ## Results Box : collapsible ------------------
+                                         fluidRow(
+                                           conditionalPanel("input.plot_btn2",
+                                                            box(width = 12, collapsible = TRUE, 
+                                                                title = "Results",
+                                                                
+                                                                div(id = "output-container3",
+                                                                    # tags$img(src = "spinner.gif",
+                                                                    #          id = "loading-spinner"),
+                                                                    DT::dataTableOutput("data")),
+                                                                conditionalPanel("output.data",
+                                                                                 uiOutput("dw_button")
+                                                                )
+                                                            )
+                                           )),
                                          ## back 3 ------------
                                          fluidRow(
                                            column(width = 2, 
