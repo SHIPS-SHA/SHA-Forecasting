@@ -40,7 +40,7 @@ server <- function(input, output, session) {
   dat <- reactive({
     req(input$ts_file)
     file_in <- input$ts_file
-    read.csv(file_in$datapath, header = TRUE)     # read csv
+    read_csv(file_in$datapath)     # read csv
   })
   
   ## Toggle submit button state according to main data -----------------------
@@ -64,13 +64,26 @@ server <- function(input, output, session) {
   
   outputOptions(output, "panelStatus", suspendWhenHidden = FALSE)
   
-  # ## read csv file of holidays ---------------------------------
-  # holidays_upload <- reactive({
-  #   if (is.null(input$holidays_file)) h <- NULL
-  #   else h <- read.csv(input$holidays_file$datapath, header = TRUE) 
-  #   return(h)
-  # })
-  # 
+  ## Toggle submit button state according to data ---------------
+  observe({
+    if (!(c("ds","y") %in% names(dat()) %>% mean == 1))
+      shinyjs::disable("plot_btn2")
+    else if (c("ds","y") %in% names(dat()) %>% mean == 1)
+      shinyjs::enable("plot_btn2")
+  })
+  
+  ## generate holiday dataframe ---------------------------------
+  holidays_upload <- reactive({
+    if (input$holiday) {
+      h <- dat() %$% 
+        rships::create_df_holidays(
+          begin = min(ds),
+          end = max(ds) + days(input$periods)
+      )
+    } else h <- NULL
+    return(h)
+  })
+  
   # ## output: table of 1st 6 rows of uploaded holidays ------------------
   # output$uploaded_holidays <- renderTable({
   #   req(holidays_upload)
@@ -83,14 +96,6 @@ server <- function(input, output, session) {
   # })
   # 
   # outputOptions(output, "panelStatus_holidays", suspendWhenHidden = FALSE)
-  
-  ## Toggle submit button state according to data ---------------
-  observe({
-    if (!(c("ds","y") %in% names(dat()) %>% mean == 1))
-      shinyjs::disable("plot_btn2")
-    else if (c("ds","y") %in% names(dat()) %>% mean == 1)
-      shinyjs::enable("plot_btn2")
-  })
   
   ## create prophet model --------------------------------------------------
   prophet_model <- eventReactive(input$plot_btn2,{
@@ -106,19 +111,17 @@ server <- function(input, output, session) {
     if (input$growth == "logistic") {
       validate(
         need(try("cap" %in% names(dat())),
-             "Error: for logistic 'growth', the input dataframe must have a column 'cap' that specifies the capacity at each 'ds'."))
+             paste("Error: for logistic 'growth', the input dataframe",
+                   "must have a column 'cap' that specifies the capacity at each 'ds'.")))
     }
     
-    # datx <- dat() %>% 
-    #   mutate(y = log(y))
-    
-    kk <- prophet(dat,
+    kk <- prophet(dat(),
                   growth = input$growth,
                   # changepoints = NULL,
                   # n.changepoints = input$n.changepoints,
                   # yearly.seasonality = input$yearly,
                   # weekly.seasonality = input$monthly,
-                  # holidays = holidays_upload(),
+                  holidays = holidays_upload(),
                   # seasonality.prior.scale = input$seasonality_scale,
                   # changepoint.prior.scale = input$changepoint_scale,
                   # holidays.prior.scale = input$holidays_scale,
@@ -147,8 +150,8 @@ server <- function(input, output, session) {
   
   ## predict future values -----------------------
   forecast <- reactive({
-    req(prophet_model(),p_future())
-    predict(prophet_model(),p_future())
+    req(prophet_model(), p_future())
+    predict(prophet_model(), p_future())
   })
   
   ## dup reactive forecast--------------------------

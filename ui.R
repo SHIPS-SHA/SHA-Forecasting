@@ -7,6 +7,9 @@ library(dplyr)
 library(prophet)
 library(ggplot2)
 library(rships)
+library(shinycssloaders)
+library(magrittr)
+library(lubridate)
 
 # Set ggplot theme
 theme_set(theme_minimal())
@@ -94,8 +97,15 @@ ui <- dashboardPage(
                                                                value = 90),
                                                   ### parameter: freq
                                                   selectInput("freq", "Forecast Frequency",
-                                                              choices = c('day', 'week', 'month', 
-                                                                          'quarter','year'))
+                                                              choices = c('Daily' = 'day', 
+                                                                          'Weekly' = 'week', 
+                                                                          'Monthly' = 'month', 
+                                                                          'Quarterly' = 'quarter',
+                                                                          'Yearly' = 'year')),
+                                                  ### Add holiday information
+                                                  checkboxInput("holiday",
+                                                                "Include holiday information?",
+                                                                value = TRUE)
                                            )
                                          ),
                                          ## Next 1 ---------------
@@ -213,9 +223,7 @@ ui <- dashboardPage(
                                                                   tabPanel("Forecast Plot",
                                                                            
                                                                            div(id = "output-container",
-                                                                               # tags$img(src = "spinner.gif",
-                                                                               #          id = "loading-spinner"),
-                                                                               plotOutput("ts_plot")
+                                                                               withSpinner(plotOutput("ts_plot"))
                                                                            )
                                                                            # )
                                                                            
@@ -224,8 +232,6 @@ ui <- dashboardPage(
                                                                            # output.logistic_check=='no_error'
                                                                            conditionalPanel("input.plot_btn2",
                                                                                             div(id = "output-container",
-                                                                                                # tags$img(src = "spinner.gif",
-                                                                                                #          id = "loading-spinner"),
                                                                                                 plotOutput("prophet_comp_plot"))
                                                                            )
                                                                   )
@@ -237,8 +243,6 @@ ui <- dashboardPage(
                                                                 title = "Results",
                                                                 
                                                                 div(id = "output-container3",
-                                                                    # tags$img(src = "spinner.gif",
-                                                                    #          id = "loading-spinner"),
                                                                     DT::dataTableOutput("data")),
                                                                 conditionalPanel("output.data",
                                                                                  uiOutput("dw_button")
