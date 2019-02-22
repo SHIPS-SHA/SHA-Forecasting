@@ -26,4 +26,3 @@ datetime_formats <- c(
 # Default values for variables
 date_col <- "Date"
 y_col <- "Actual"
-

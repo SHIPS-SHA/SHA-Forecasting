@@ -60,12 +60,31 @@ server <- function(input, output, session) {
     }
   })
   
+  ## Create reactive radio buttons for selecting columns---
+  output$dateColumn <- renderUI({
+    req(dat)
+    columns <- names(dat())
+    radioButtons("dColumns", "Select Date column",
+                 columns, selected = character(0))
+  })
+  
+  output$actualColumn <- renderUI({
+    req(dat)
+    columns <- names(dat())
+    
+    columns_s <- c("No actuals column",
+                   columns[columns != input$dColumns])
+    
+    radioButtons("aColumns", "Select Actuals column",
+                 columns_s, selected = "No actuals column")
+  })
+  
+  
   ## Toggle submit button state according to main data -----------------------
   observe({
-    if (!(c(date_col, y_col) %in% names(dat()) %>% mean == 1))
+    if (is.null(input$dColumns))
       shinyjs::disable("next1")
-    else if (c(date_col, y_col) %in% names(dat()) %>% mean == 1)
-      shinyjs::enable("next1")
+    else shinyjs::enable("next1")
   })
   
   ## output: table of 1st 6 rows of uploaded main data ------------------

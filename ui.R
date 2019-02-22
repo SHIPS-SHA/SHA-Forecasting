@@ -76,7 +76,7 @@ ui <- dashboardPage(
                                            column(width = 6,
                                                   # column(width = 12,
                                                   tags$h4("Main Dataset"),
-                                                  helpText("A valid dataframe contains at least 2 colums (ds, y)"),
+                                                  helpText("One column should contain the date information"),
                                                   fileInput("ts_file","Upload CSV File",
                                                             accept = c(
                                                               "text/csv",
@@ -93,6 +93,14 @@ ui <- dashboardPage(
                                            ),
                                            ## predict parameters --------------------
                                            column(width = 6,
+                                                  tags$h3("Select Columns:"),
+                                                  fluidRow(
+                                                    column(width = 6, 
+                                                           uiOutput("dateColumn")),
+                                                    column(width = 6,
+                                                           uiOutput("actualColumn"))
+                                                  ),
+                                                  hr(),
                                                   tags$h3("Forecasting Parameters"),
                                                   ### paramater: periods
                                                   numericInput("periods",
