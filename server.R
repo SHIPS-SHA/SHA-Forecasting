@@ -1,3 +1,32 @@
+# Helper functions
+is_date <- function(df, str) {
+  str_s <- as.name(str)
+  summarise(df, is.Date(!!str_s) | is.POSIXct(!!str_s)) %>% pull
+}
+
+parse_date <- function(df, str, format, tz = "America/Regina") {
+  str_s <- as.name(str)
+  mutate(df, !!str_s := as.POSIXct(strptime(!!str_s,
+                                            format = format)))
+}
+
+# Date-time formats to try on data
+datetime_formats <- c(
+  "%m/%d/%Y %H:%M",
+  "%m/%d/%Y %H%M",
+  "%m/%d/%Y",
+  "%Y/%m/%d %H:%M",
+  "%Y/%m/%d %H%M",
+  "%Y/%m/%d",
+  "%Y%m%d %H:%M",
+  "%Y%m%d %H%M",
+  "%Y%m%d"
+)
+
+# Default values for variables
+date_col <- "Date"
+y_col <- "Actual"
+
 server <- function(input, output, session) {
   addClass(selector = "body", class = "sidebar-collapse")
   
@@ -40,21 +69,38 @@ server <- function(input, output, session) {
   dat <- reactive({
     req(input$ts_file)
     file_in <- input$ts_file
-    read_csv(file_in$datapath)     # read csv
+    data <- read_csv(file_in$datapath)     # read csv
+    # Make sure we have a date
+    if (is_date(data, date_col)) {
+      return(data)
+    } else {
+      # Figure out right format on small sample, then parse
+      data_s <- data %>% sample_n(100) %>% pull(date_col)
+      possible_formats <- Filter(function(form) {
+        strptime(data_s, format = form) %>% 
+          {!any(is.na(.))}
+        }, datetime_formats)
+      data <- data %>% 
+        parse_date(date_col, format = possible_formats[1])
+      
+      return(data)
+    }
   })
   
   ## Toggle submit button state according to main data -----------------------
   observe({
-    if (!(c("ds","y") %in% names(dat()) %>% mean == 1))
+    if (!(c(date_col, y_col) %in% names(dat()) %>% mean == 1))
       shinyjs::disable("next1")
-    else if (c("ds","y") %in% names(dat()) %>% mean == 1)
+    else if (c(date_col, y_col) %in% names(dat()) %>% mean == 1)
       shinyjs::enable("next1")
   })
   
   ## output: table of 1st 6 rows of uploaded main data ------------------
   output$uploaded_data <- renderTable({
     req(dat)
-    head(dat())
+    dat() %>% 
+      head() %>% 
+      mutate(!!date_col := strftime(!!sym(date_col), "%Y/%m/%d"))
   })
   
   ## panel status depending on main data ------------------------
@@ -66,9 +112,9 @@ server <- function(input, output, session) {
   
   ## Toggle submit button state according to data ---------------
   observe({
-    if (!(c("ds","y") %in% names(dat()) %>% mean == 1))
+    if (!(c(date_col, y_col) %in% names(dat()) %>% mean == 1))
       shinyjs::disable("plot_btn2")
-    else if (c("ds","y") %in% names(dat()) %>% mean == 1)
+    else if (c(date_col, y_col) %in% names(dat()) %>% mean == 1)
       shinyjs::enable("plot_btn2")
   })
   
@@ -115,20 +161,22 @@ server <- function(input, output, session) {
                    "must have a column 'cap' that specifies the capacity at each 'ds'.")))
     }
     
-    kk <- prophet(dat(),
-                  growth = input$growth,
-                  # changepoints = NULL,
-                  # n.changepoints = input$n.changepoints,
-                  # yearly.seasonality = input$yearly,
-                  # weekly.seasonality = input$monthly,
-                  holidays = holidays_upload(),
-                  # seasonality.prior.scale = input$seasonality_scale,
-                  # changepoint.prior.scale = input$changepoint_scale,
-                  # holidays.prior.scale = input$holidays_scale,
-                  # mcmc.samples = input$mcmc.samples,
-                  # interval.width = input$interval.width,
-                  # uncertainty.samples = input$uncertainty.samples,
-                  fit = TRUE)
+    kk <- dat() %>% 
+      group_by(ds = !!as.name(date_col)) %>% 
+      summarise(y = sum(!!as.name(y_col))) %>% 
+      prophet(growth = input$growth,
+              # changepoints = NULL,
+              # n.changepoints = input$n.changepoints,
+              # yearly.seasonality = input$yearly,
+              # weekly.seasonality = input$monthly,
+              holidays = holidays_upload(),
+              # seasonality.prior.scale = input$seasonality_scale,
+              # changepoint.prior.scale = input$changepoint_scale,
+              # holidays.prior.scale = input$holidays_scale,
+              # mcmc.samples = input$mcmc.samples,
+              # interval.width = input$interval.width,
+              # uncertainty.samples = input$uncertainty.samples,
+              fit = TRUE)
     
     return(kk)
   })
@@ -197,7 +245,7 @@ server <- function(input, output, session) {
   
   ## error msg for main dataset------------------------
   output$msg_main_data <- renderUI({
-    if (c("ds","y") %in% names(dat()) %>% mean != 1)
+    if (c(date_col, y_col) %in% names(dat()) %>% mean != 1)
       "Invalid Input: dataframe should have at least two columns named (ds & y)"
   })
   
