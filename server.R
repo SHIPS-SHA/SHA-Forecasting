@@ -1,31 +1,4 @@
-# Helper functions
-is_date <- function(df, str) {
-  str_s <- as.name(str)
-  summarise(df, is.Date(!!str_s) | is.POSIXct(!!str_s)) %>% pull
-}
-
-parse_date <- function(df, str, format, tz = "America/Regina") {
-  str_s <- as.name(str)
-  mutate(df, !!str_s := as.POSIXct(strptime(!!str_s,
-                                            format = format)))
-}
-
-# Date-time formats to try on data
-datetime_formats <- c(
-  "%m/%d/%Y %H:%M",
-  "%m/%d/%Y %H%M",
-  "%m/%d/%Y",
-  "%Y/%m/%d %H:%M",
-  "%Y/%m/%d %H%M",
-  "%Y/%m/%d",
-  "%Y%m%d %H:%M",
-  "%Y%m%d %H%M",
-  "%Y%m%d"
-)
-
-# Default values for variables
-date_col <- "Date"
-y_col <- "Actual"
+source("utilities.R")
 
 server <- function(input, output, session) {
   addClass(selector = "body", class = "sidebar-collapse")
@@ -87,12 +60,31 @@ server <- function(input, output, session) {
     }
   })
   
+  ## Create reactive radio buttons for selecting columns---
+  output$dateColumn <- renderUI({
+    req(dat)
+    columns <- names(dat())
+    radioButtons("dColumns", "Select Date column",
+                 columns, selected = character(0))
+  })
+  
+  output$actualColumn <- renderUI({
+    req(dat)
+    columns <- names(dat())
+    
+    columns_s <- c("No actuals column",
+                   columns[columns != input$dColumns])
+    
+    radioButtons("aColumns", "Select Actuals column",
+                 columns_s, selected = "No actuals column")
+  })
+  
+  
   ## Toggle submit button state according to main data -----------------------
   observe({
-    if (!(c(date_col, y_col) %in% names(dat()) %>% mean == 1))
+    if (is.null(input$dColumns))
       shinyjs::disable("next1")
-    else if (c(date_col, y_col) %in% names(dat()) %>% mean == 1)
-      shinyjs::enable("next1")
+    else shinyjs::enable("next1")
   })
   
   ## output: table of 1st 6 rows of uploaded main data ------------------
