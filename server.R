@@ -65,7 +65,7 @@ server <- function(input, output, session) {
     req(dat)
     columns <- names(dat())
     radioButtons("dColumns", "Select Date column",
-                 columns, selected = character(0))
+                 columns, selected = character(0)) # No default
   })
   
   output$actualColumn <- renderUI({
@@ -110,13 +110,43 @@ server <- function(input, output, session) {
       shinyjs::enable("plot_btn2")
   })
   
+  ## Create filters based on imported data-----------------------
+  # When input$aColumns and input$dColumns change, the insertUI is rerun... That's a problem.
+  # columns_filter <- reactive({
+  #   req(dat, input$dColumns, input$aColumns)
+  #   cnames <- names(dat())
+  #   if (input$aColumns == "No actuals column") {
+  #     return(cnames[cnames != date_col])
+  #   } else {
+  #     cnames[cnames != c(date_col, y_col)]
+  #   }
+  # })
+  columns_filter <- c("Site", "Visit Service",
+                      "Bed Service", "Unit")
+  
+  foo <- observe({
+    req(dat, columns_filter)
+    for (cname in columns_filter) {
+      options_filter <- unique(dplyr::pull(dat(), cname))
+
+      insertUI(
+        selector = '#placeholder',
+        where = "afterEnd",
+        ui = column(width = 12/length(columns_filter),
+                    checkboxGroupInput(paste0(cname, "_sel"), cname,
+                                       choices = options_filter)
+        )
+      )
+    }
+  })
+  
   ## generate holiday dataframe ---------------------------------
   holidays_upload <- reactive({
     if (input$holiday) {
       h <- dat() %$% 
         rships::create_df_holidays(
-          begin = min(ds),
-          end = max(ds) + days(input$periods)
+          begin = min(!!sym(date_col)),
+          end = max(!!sym(date_col)) + days(input$periods)
       )
     } else h <- NULL
     return(h)
