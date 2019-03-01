@@ -3,6 +3,7 @@ library(DT)
 library(shiny)
 library(shinydashboard)
 library(shinyjs)
+library(shinyWidgets)
 library(dplyr)
 library(prophet)
 library(ggplot2)
@@ -31,7 +32,7 @@ ui <- dashboardPage(
   ## Body ------------------------------------
   dashboardBody(
     ### include css file --------------------
-    tags$head(tags$style(includeCSS("./www/mycss.css"))),
+    tags$head(tags$style(includeCSS("./www/style.css"))),
     ### include script with function openTab----------------------
     tags$script(HTML("var openTab = function(tabName){$('a', $('.sidebar')).each(function() {
                      if(this.getAttribute('data-value') == tabName) {

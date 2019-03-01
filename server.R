@@ -127,14 +127,20 @@ server <- function(input, output, session) {
   foo <- observe({
     req(dat, columns_filter)
     for (cname in columns_filter) {
-      options_filter <- unique(dplyr::pull(dat(), cname))
+      options_filter <- sort(unique(dplyr::pull(dat(), cname)))
 
       insertUI(
         selector = '#placeholder',
         where = "afterEnd",
         ui = column(width = 12/length(columns_filter),
-                    checkboxGroupInput(paste0(cname, "_sel"), cname,
-                                       choices = options_filter)
+                    # checkboxGroupInput(paste0(cname, "_sel"), cname,
+                    #                    choices = options_filter,
+                    #                    inline = TRUE),
+                    pickerInput(paste0(cname, "_sel"), cname,
+                                choices = options_filter,
+                                multiple = TRUE),
+                    # hr(),
+                    NULL
         )
       )
     }
