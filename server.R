@@ -47,7 +47,7 @@ server <- function(input, output, session) {
     if (is_date(data, date_col)) {
       return(data)
     } else {
-      # Figure out right format on small sample, then parse
+      # Figure out right date format on small sample, then parse
       data_s <- data %>% sample_n(100) %>% pull(date_col)
       possible_formats <- Filter(function(form) {
         strptime(data_s, format = form) %>% 
@@ -111,24 +111,18 @@ server <- function(input, output, session) {
   })
   
   ## Create filters based on imported data-----------------------
-  # When input$aColumns and input$dColumns change, the insertUI is rerun... That's a problem.
-  # columns_filter <- reactive({
-  #   req(dat, input$dColumns, input$aColumns)
-  #   cnames <- names(dat())
-  #   if (input$aColumns == "No actuals column") {
-  #     return(cnames[cnames != date_col])
-  #   } else {
-  #     cnames[cnames != c(date_col, y_col)]
-  #   }
-  # })
-  columns_filter <- c("Site", "Visit Service",
-                      "Bed Service", "Unit")
-  
-  foo <- observe({
-    req(dat, columns_filter)
+  columns_filter <- character(0)
+  observeEvent(input$next1, {
+    req(dat, input$dColumns, input$aColumns)
+    cnames <- names(dat())
+    if (input$aColumns == "No actuals column") {
+      columns_filter <- cnames[cnames != date_col]
+    } else {
+      columns_filter <- cnames[!cnames %in% c(date_col, y_col)]
+    }
     for (cname in columns_filter) {
       options_filter <- sort(unique(dplyr::pull(dat(), cname)))
-
+      
       insertUI(
         selector = '#placeholder',
         where = "afterEnd",
@@ -138,7 +132,8 @@ server <- function(input, output, session) {
                     #                    inline = TRUE),
                     pickerInput(paste0(cname, "_sel"), cname,
                                 choices = options_filter,
-                                multiple = TRUE),
+                                multiple = TRUE,
+                                options = list(`actions-box` = TRUE)),
                     # hr(),
                     NULL
         )
