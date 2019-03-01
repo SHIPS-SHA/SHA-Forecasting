@@ -47,7 +47,7 @@ server <- function(input, output, session) {
     if (is_date(data, date_col)) {
       return(data)
     } else {
-      # Figure out right format on small sample, then parse
+      # Figure out right date format on small sample, then parse
       data_s <- data %>% sample_n(100) %>% pull(date_col)
       possible_formats <- Filter(function(form) {
         strptime(data_s, format = form) %>% 
@@ -65,7 +65,7 @@ server <- function(input, output, session) {
     req(dat)
     columns <- names(dat())
     radioButtons("dColumns", "Select Date column",
-                 columns, selected = character(0))
+                 columns, selected = character(0)) # No default
   })
   
   output$actualColumn <- renderUI({
@@ -110,13 +110,44 @@ server <- function(input, output, session) {
       shinyjs::enable("plot_btn2")
   })
   
+  ## Create filters based on imported data-----------------------
+  columns_filter <- character(0)
+  observeEvent(input$next1, {
+    req(dat, input$dColumns, input$aColumns)
+    cnames <- names(dat())
+    if (input$aColumns == "No actuals column") {
+      columns_filter <- cnames[cnames != date_col]
+    } else {
+      columns_filter <- cnames[!cnames %in% c(date_col, y_col)]
+    }
+    for (cname in columns_filter) {
+      options_filter <- sort(unique(dplyr::pull(dat(), cname)))
+      
+      insertUI(
+        selector = '#placeholder',
+        where = "afterEnd",
+        ui = column(width = 12/length(columns_filter),
+                    # checkboxGroupInput(paste0(cname, "_sel"), cname,
+                    #                    choices = options_filter,
+                    #                    inline = TRUE),
+                    pickerInput(paste0(cname, "_sel"), cname,
+                                choices = options_filter,
+                                multiple = TRUE,
+                                options = list(`actions-box` = TRUE)),
+                    # hr(),
+                    NULL
+        )
+      )
+    }
+  })
+  
   ## generate holiday dataframe ---------------------------------
   holidays_upload <- reactive({
     if (input$holiday) {
       h <- dat() %$% 
         rships::create_df_holidays(
-          begin = min(ds),
-          end = max(ds) + days(input$periods)
+          begin = min(!!sym(date_col)),
+          end = max(!!sym(date_col)) + days(input$periods)
       )
     } else h <- NULL
     return(h)

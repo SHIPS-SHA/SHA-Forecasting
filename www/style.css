@@ -1,0 +1,45 @@
+/* CSS */
+
+#output-container {
+position: relative;
+}
+#loading-spinner {
+position: absolute;
+left: 50%;
+top: 50%;
+/*z-index: -1;*/
+margin-top: -33px;  /* half of the spinner's height */
+margin-left: -33px; /* half of the spinner's width */
+}
+#plot.recalculating {
+z-index: -2;
+}
+
+#ts_plot.recalculating{
+  z-index: -2;
+}
+
+#btn {
+width:100%;
+font-size:200%
+}
+
+/* To have checkbox groups align nicely*/
+.multicol { 
+  height: 150px;
+  -webkit-column-count: 5; /* Chrome, Safari, Opera */ 
+  -moz-column-count: 5;    /* Firefox */ 
+  -ms-column-count: 5;
+  column-count: 5; 
+  -moz-column-fill: auto;
+  -column-fill: auto;
+} 
+
+.checkbox-inline { 
+  margin-left: 0px;
+  margin-right: 10px;
+}
+.checkbox-inline+.checkbox-inline {
+  margin-left: 0px;
+  margin-right: 10px;
+}

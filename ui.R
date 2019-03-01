@@ -3,6 +3,7 @@ library(DT)
 library(shiny)
 library(shinydashboard)
 library(shinyjs)
+library(shinyWidgets)
 library(dplyr)
 library(prophet)
 library(ggplot2)
@@ -31,7 +32,7 @@ ui <- dashboardPage(
   ## Body ------------------------------------
   dashboardBody(
     ### include css file --------------------
-    tags$head(tags$style(includeCSS("./www/mycss.css"))),
+    tags$head(tags$style(includeCSS("./www/style.css"))),
     ### include script with function openTab----------------------
     tags$script(HTML("var openTab = function(tabName){$('a', $('.sidebar')).each(function() {
                      if(this.getAttribute('data-value') == tabName) {
@@ -126,66 +127,70 @@ ui <- dashboardPage(
                                                                                  style = "width:100%; font-size:200%"))))
                                 ),
                                 ## TAB 2 : Set Parameters -----------------------------------
-                                tabPanel(title = "Set Parameters", value = "panel2",
-                                         fluidRow(
-                                           column(width = 12,
-                                                  column(width = 9, 
-                                                         offset = 6,
-                                                         tags$h3("Prophet Parameters")),
-                                                  column(width = 6,
-                                                         radioButtons("growth",
-                                                                      "growth",
-                                                                      c('linear',
-                                                                        'logistic'), 
-                                                                      inline = TRUE),
-                                                         
-                                                         ### parameter: yearly.seasonality
-                                                         checkboxInput("yearly",
-                                                                       "yearly.seasonality", 
-                                                                       value = TRUE),
-                                                         
-                                                         ### parameter: weekly.seasonality 
-                                                         checkboxInput("monthly",
-                                                                       "weekly.seasonality", 
-                                                                       value = TRUE),
-                                                         ### parameter: n.changepoints
-                                                         numericInput("n.changepoints",
-                                                                      "n.changepoints", 
-                                                                      value = 25),
-                                                         
-                                                         ### parameter: seasonality.prior.scale
-                                                         numericInput("seasonality_scale",
-                                                                      "seasonality.prior.scale", 
-                                                                      value = 10),
-                                                         
-                                                         ### parameter: changepoint.prior.scale
-                                                         numericInput("changepoint_scale",
-                                                                      "changepoint.prior.scale", 
-                                                                      value = 0.05, 
-                                                                      step = 0.01)),
-                                                  column(width = 6,
-                                                         
-                                                         ### parameter: holidays.prior.scale
-                                                         numericInput("holidays_scale",
-                                                                      "holidays.prior.scale", 
-                                                                      value = 10),
-                                                         
-                                                         ### parameter: mcmc.samples
-                                                         numericInput("mcmc.samples", 
-                                                                      "mcmc.samples", 
-                                                                      value = 0),
-                                                         
-                                                         ### parameter: interval.width
-                                                         numericInput("interval.width", 
-                                                                      "interval.width", 
-                                                                      value = 0.8, 
-                                                                      step = 0.1),
-                                                         ### parameter: uncertainty.samples
-                                                         numericInput("uncertainty.samples",
-                                                                      "uncertainty.samples", 
-                                                                      value = 1000))
-                                                  
-                                           ) #,
+                                tabPanel(title = "Select Filters", value = "panel2",
+                                         fluidRow(id = "placeholder"
+                                           # column(width = 12,
+                                           #        tags$div(id = 'placeholder'))
+                                           # column(width = 12, 
+                                           #        uiOutput("SiteFilter"))
+                                           # column(width = 12,
+                                           #        column(width = 9, 
+                                           #               offset = 6,
+                                           #               tags$h3("Prophet Parameters")),
+                                           #        column(width = 6,
+                                           #               radioButtons("growth",
+                                           #                            "growth",
+                                           #                            c('linear',
+                                           #                              'logistic'), 
+                                           #                            inline = TRUE),
+                                           #               
+                                           #               ### parameter: yearly.seasonality
+                                           #               checkboxInput("yearly",
+                                           #                             "yearly.seasonality", 
+                                           #                             value = TRUE),
+                                           #               
+                                           #               ### parameter: weekly.seasonality 
+                                           #               checkboxInput("monthly",
+                                           #                             "weekly.seasonality", 
+                                           #                             value = TRUE),
+                                           #               ### parameter: n.changepoints
+                                           #               numericInput("n.changepoints",
+                                           #                            "n.changepoints", 
+                                           #                            value = 25),
+                                           #               
+                                           #               ### parameter: seasonality.prior.scale
+                                           #               numericInput("seasonality_scale",
+                                           #                            "seasonality.prior.scale", 
+                                           #                            value = 10),
+                                           #               
+                                           #               ### parameter: changepoint.prior.scale
+                                           #               numericInput("changepoint_scale",
+                                           #                            "changepoint.prior.scale", 
+                                           #                            value = 0.05, 
+                                           #                            step = 0.01)),
+                                           #        column(width = 6,
+                                           #               
+                                           #               ### parameter: holidays.prior.scale
+                                           #               numericInput("holidays_scale",
+                                           #                            "holidays.prior.scale", 
+                                           #                            value = 10),
+                                           #               
+                                           #               ### parameter: mcmc.samples
+                                           #               numericInput("mcmc.samples", 
+                                           #                            "mcmc.samples", 
+                                           #                            value = 0),
+                                           #               
+                                           #               ### parameter: interval.width
+                                           #               numericInput("interval.width", 
+                                           #                            "interval.width", 
+                                           #                            value = 0.8, 
+                                           #                            step = 0.1),
+                                           #               ### parameter: uncertainty.samples
+                                           #               numericInput("uncertainty.samples",
+                                           #                            "uncertainty.samples", 
+                                           #                            value = 1000))
+                                           #        
+                                           # ) ,
                                            # ## predict parameters --------------------
                                            # column(width = 4,
                                            #        tags$h3("Predict Parameters"),
