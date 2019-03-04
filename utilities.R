@@ -1,4 +1,4 @@
-# Helper functions
+# Helper functions----
 is_date <- function(df, str) {
   str_s <- as.name(str)
   summarise(df, is.Date(!!str_s) | is.POSIXct(!!str_s)) %>% pull
@@ -10,6 +10,16 @@ parse_date <- function(df, str, format, tz = "America/Regina") {
                                             format = format)))
 }
 
+dynamic_filter <- function(df, variables, conditions){ 
+  filter_conditions <- purrr::map2(variables, conditions, 
+                                   function(var, cond) {
+                                     # Construct list of quoted filtering conditions
+                                     rlang::quo(!!sym(var) %in% cond)
+                                   })
+  dplyr::filter(df, !!!filter_conditions)
+}
+
+# Config parameters----
 # Date-time formats to try on data
 datetime_formats <- c(
   "%m/%d/%Y %H:%M",
@@ -26,3 +36,7 @@ datetime_formats <- c(
 # Default values for variables
 date_col <- "Date"
 y_col <- "Actual"
+# Set ggplot theme
+theme_set(theme_minimal())
+# Increase input file limit to 10MB
+options(shiny.maxRequestSize = 10*1024^2)

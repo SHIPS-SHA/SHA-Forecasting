@@ -13,11 +13,6 @@ library(magrittr)
 library(lubridate)
 library(readr)
 
-# Set ggplot theme
-theme_set(theme_minimal())
-# Increase input file limit to 10MB
-options(shiny.maxRequestSize = 10*1024^2)
-
 ui <- dashboardPage(
   dashboardHeader(title = "SHA-Forecasting Tool"),
   

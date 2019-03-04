@@ -143,12 +143,13 @@ server <- function(input, output, session) {
   
   ## generate holiday dataframe ---------------------------------
   holidays_upload <- reactive({
+    req(dat, input$dColumns)
     if (input$holiday) {
-      h <- dat() %$% 
-        rships::create_df_holidays(
-          begin = min(!!sym(date_col)),
-          end = max(!!sym(date_col)) + days(input$periods)
-      )
+      dateRange <- dat() %>% pull(input$dColumns) %>% range
+      h <- rships::create_df_holidays(
+        begin = dateRange[1],
+        end = dateRange[2] + lubridate::days(input$periods)
+        )
     } else h <- NULL
     return(h)
   })
@@ -167,27 +168,30 @@ server <- function(input, output, session) {
   # outputOptions(output, "panelStatus_holidays", suspendWhenHidden = FALSE)
   
   ## create prophet model --------------------------------------------------
-  prophet_model <- eventReactive(input$plot_btn2,{
+  filter_values <- eventReactive(input$next2, {
+    lapply(columns_filter, function(cname) {
+      input[[cname]]
+    })
+  })
+  
+  prophet_model <- eventReactive(input$plot_btn2, {
     
-    req(dat(), 
-        # ("ds" %in% dat()), "y" %in% names(dat()),
-        input$n.changepoints,
-        input$seasonality_scale, input$changepoint_scale,
-        input$holidays_scale, input$mcmc.samples,
-        input$mcmc.samples, input$interval.width,
-        input$uncertainty.samples)
+    req(dat, filter_values)
+    # browser()
+    # if (input$growth == "logistic") {
+    #   validate(
+    #     need(try("cap" %in% names(dat())),
+    #          paste("Error: for logistic 'growth', the input dataframe",
+    #                "must have a column 'cap' that specifies the capacity at each 'ds'.")))
+    # }
     
-    if (input$growth == "logistic") {
-      validate(
-        need(try("cap" %in% names(dat())),
-             paste("Error: for logistic 'growth', the input dataframe",
-                   "must have a column 'cap' that specifies the capacity at each 'ds'.")))
-    }
+    data_cleaned <- dat() %>% 
+      dynamic_filter(columns_filter, filter_values()) %>% 
+      group_by(ds = !!sym(date_col)) %>% 
+      summarise(y = sum(!!sym(y_col))) 
     
-    kk <- dat() %>% 
-      group_by(ds = !!as.name(date_col)) %>% 
-      summarise(y = sum(!!as.name(y_col))) %>% 
-      prophet(growth = input$growth,
+    model <- data_cleaned %>% 
+      prophet(growth = "linear",
               # changepoints = NULL,
               # n.changepoints = input$n.changepoints,
               # yearly.seasonality = input$yearly,
@@ -201,7 +205,7 @@ server <- function(input, output, session) {
               # uncertainty.samples = input$uncertainty.samples,
               fit = TRUE)
     
-    return(kk)
+    return(model)
   })
   
   ## dup reactive prophet_model ------------------------------
@@ -222,6 +226,7 @@ server <- function(input, output, session) {
   ## predict future values -----------------------
   forecast <- reactive({
     req(prophet_model(), p_future())
+    # browser()
     predict(prophet_model(), p_future())
   })
   
