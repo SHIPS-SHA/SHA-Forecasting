@@ -13,9 +13,14 @@ parse_date <- function(df, str, format, tz = "America/Regina") {
 dynamic_filter <- function(df, variables, conditions){ 
   filter_conditions <- purrr::map2(variables, conditions, 
                                    function(var, cond) {
-                                     # Construct list of quoted filtering conditions
-                                     rlang::quo(!!sym(var) %in% cond)
-                                   })
+                                     if (is.null(cond)) {
+                                       return(NULL)
+                                     } else {
+                                       # Construct list of quoted filtering conditions
+                                       return(rlang::quo(!!sym(var) %in% cond))
+                                     }
+                                   }) %>% 
+    Filter(purrr::negate(is.null), .)
   dplyr::filter(df, !!!filter_conditions)
 }
 

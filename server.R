@@ -116,9 +116,9 @@ server <- function(input, output, session) {
     req(dat, input$dColumns, input$aColumns)
     cnames <- names(dat())
     if (input$aColumns == "No actuals column") {
-      columns_filter <- cnames[cnames != date_col]
+      columns_filter <<- cnames[cnames != date_col]
     } else {
-      columns_filter <- cnames[!cnames %in% c(date_col, y_col)]
+      columns_filter <<- cnames[!cnames %in% c(date_col, y_col)]
     }
     for (cname in columns_filter) {
       options_filter <- sort(unique(dplyr::pull(dat(), cname)))
@@ -170,14 +170,14 @@ server <- function(input, output, session) {
   ## create prophet model --------------------------------------------------
   filter_values <- eventReactive(input$next2, {
     lapply(columns_filter, function(cname) {
-      input[[cname]]
+      input[[paste0(cname, "_sel")]]
     })
   })
   
   prophet_model <- eventReactive(input$plot_btn2, {
     
     req(dat, filter_values)
-    # browser()
+    #  
     # if (input$growth == "logistic") {
     #   validate(
     #     need(try("cap" %in% names(dat())),
@@ -185,11 +185,17 @@ server <- function(input, output, session) {
     #                "must have a column 'cap' that specifies the capacity at each 'ds'.")))
     # }
     
+     
     data_cleaned <- dat() %>% 
       dynamic_filter(columns_filter, filter_values()) %>% 
-      group_by(ds = !!sym(date_col)) %>% 
-      summarise(y = sum(!!sym(y_col))) 
-    
+      group_by(ds = !!sym(input$dColumns)) %>% {
+        if (input$aColumns == "No actuals column") {
+          summarise(., y = n())
+        } else {
+          summarise(., y = sum(!!sym(input$aColumns)))
+        }
+      }
+      
     model <- data_cleaned %>% 
       prophet(growth = "linear",
               # changepoints = NULL,
@@ -226,7 +232,7 @@ server <- function(input, output, session) {
   ## predict future values -----------------------
   forecast <- reactive({
     req(prophet_model(), p_future())
-    # browser()
+    #  
     predict(prophet_model(), p_future())
   })
   
