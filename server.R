@@ -3,7 +3,7 @@ source("utilities.R")
 server <- function(input, output, session) {
   addClass(selector = "body", class = "sidebar-collapse")
   
-  ## Next/Back Buttons actions (to be turned into modules)---------------------------
+  ## Next/Back Buttons actions (to be turned into modules)----
   observeEvent(input$next1, {
     updateTabsetPanel(session, "inTabset",
                       selected = "panel2")
@@ -29,20 +29,11 @@ server <- function(input, output, session) {
                       selected = "panel3")
   })
   
-  ## function: duplicatedReactive values -----------------------------
-  duplicatedReactive <- function(signal){
-    values <- reactiveValues(val = "")
-    observe({
-      values$val <- signal()
-    })
-    reactive(values$val)
-  }
-  
-  ## read csv file main data------------------------------------------------
+  ## read csv file main data----
   dat <- reactive({
     req(input$ts_file)
     file_in <- input$ts_file
-    data <- read_csv(file_in$datapath)     # read csv
+    data <- read_csv(file_in$datapath) # read csv
     # Make sure we have a date
     if (is_date(data, date_col)) {
       return(data)
@@ -60,7 +51,7 @@ server <- function(input, output, session) {
     }
   })
   
-  ## Create reactive radio buttons for selecting columns---
+  ## Create reactive radio buttons for selecting columns----
   output$dateColumn <- renderUI({
     req(dat)
     columns <- names(dat())
@@ -80,14 +71,14 @@ server <- function(input, output, session) {
   })
   
   
-  ## Toggle submit button state according to main data -----------------------
+  ## Toggle submit button state according to main data----
   observe({
     if (is.null(input$dColumns))
       shinyjs::disable("next1")
     else shinyjs::enable("next1")
   })
   
-  ## output: table of 1st 6 rows of uploaded main data ------------------
+  ## output: table of 1st 6 rows of uploaded main data----
   output$uploaded_data <- renderTable({
     req(dat)
     dat() %>% 
@@ -95,14 +86,14 @@ server <- function(input, output, session) {
       mutate(!!date_col := strftime(!!sym(date_col), "%Y/%m/%d"))
   })
   
-  ## panel status depending on main data ------------------------
+  ## panel status depending on main data----
   output$panelStatus <- reactive({
     nrow(dat()) > 0
   })
   
   outputOptions(output, "panelStatus", suspendWhenHidden = FALSE)
   
-  ## Toggle submit button state according to data ---------------
+  ## Toggle submit button state according to data----
   observe({
     if (!(c(date_col, y_col) %in% names(dat()) %>% mean == 1))
       shinyjs::disable("plot_btn2")
@@ -110,7 +101,7 @@ server <- function(input, output, session) {
       shinyjs::enable("plot_btn2")
   })
   
-  ## Create filters based on imported data-----------------------
+  ## Create filters based on imported data----
   columns_filter <- character(0)
   observeEvent(input$next1, {
     req(dat, input$dColumns, input$aColumns)
@@ -127,21 +118,16 @@ server <- function(input, output, session) {
         selector = '#placeholder',
         where = "afterEnd",
         ui = column(width = 12/length(columns_filter),
-                    # checkboxGroupInput(paste0(cname, "_sel"), cname,
-                    #                    choices = options_filter,
-                    #                    inline = TRUE),
                     pickerInput(paste0(cname, "_sel"), cname,
                                 choices = options_filter,
                                 multiple = TRUE,
-                                options = list(`actions-box` = TRUE)),
-                    # hr(),
-                    NULL
+                                options = list(`actions-box` = TRUE))
         )
       )
     }
   })
   
-  ## generate holiday dataframe ---------------------------------
+  ## generate holiday dataframe----
   holidays_upload <- reactive({
     req(dat, input$dColumns)
     if (input$holiday) {
@@ -154,20 +140,7 @@ server <- function(input, output, session) {
     return(h)
   })
   
-  # ## output: table of 1st 6 rows of uploaded holidays ------------------
-  # output$uploaded_holidays <- renderTable({
-  #   req(holidays_upload)
-  #   head(holidays_upload())
-  # })
-  # 
-  # ## panel status depending on holidays ------------------------
-  # output$panelStatus_holidays <- reactive({
-  #   !(is.null(holidays_upload()))
-  # })
-  # 
-  # outputOptions(output, "panelStatus_holidays", suspendWhenHidden = FALSE)
-  
-  ## create prophet model --------------------------------------------------
+  ## create prophet model----
   filter_values <- eventReactive(input$next2, {
     lapply(columns_filter, function(cname) {
       input[[paste0(cname, "_sel")]]
@@ -175,17 +148,8 @@ server <- function(input, output, session) {
   })
   
   prophet_model <- eventReactive(input$plot_btn2, {
-    
     req(dat, filter_values)
-    #  
-    # if (input$growth == "logistic") {
-    #   validate(
-    #     need(try("cap" %in% names(dat())),
-    #          paste("Error: for logistic 'growth', the input dataframe",
-    #                "must have a column 'cap' that specifies the capacity at each 'ds'.")))
-    # }
     
-     
     data_cleaned <- dat() %>% 
       dynamic_filter(columns_filter, filter_values()) %>% 
       group_by(ds = !!sym(input$dColumns)) %>% {
@@ -198,26 +162,16 @@ server <- function(input, output, session) {
       
     model <- data_cleaned %>% 
       prophet(growth = "linear",
-              # changepoints = NULL,
-              # n.changepoints = input$n.changepoints,
-              # yearly.seasonality = input$yearly,
-              # weekly.seasonality = input$monthly,
               holidays = holidays_upload(),
-              # seasonality.prior.scale = input$seasonality_scale,
-              # changepoint.prior.scale = input$changepoint_scale,
-              # holidays.prior.scale = input$holidays_scale,
-              # mcmc.samples = input$mcmc.samples,
-              # interval.width = input$interval.width,
-              # uncertainty.samples = input$uncertainty.samples,
               fit = TRUE)
     
     return(model)
   })
   
-  ## dup reactive prophet_model ------------------------------
+  ## dup reactive prophet_model----
   p_model <- duplicatedReactive(prophet_model)
   
-  ## Make dataframe with future dates for forecasting -------------
+  ## Make dataframe with future dates for forecasting----
   future <- eventReactive(input$plot_btn2,{
     req(p_model(),input$periods, input$freq)
     make_future_dataframe(p_model(),
@@ -226,28 +180,26 @@ server <- function(input, output, session) {
                           include_history = TRUE)
   })
   
-  ## dup reactive future--------------------------
+  ## dup reactive future----
   p_future <- duplicatedReactive(future)
   
-  ## predict future values -----------------------
+  ## predict future values----
   forecast <- reactive({
     req(prophet_model(), p_future())
-    #  
     predict(prophet_model(), p_future())
   })
   
-  ## dup reactive forecast--------------------------
+  ## dup reactive forecast----
   p_forecast <- duplicatedReactive(forecast)
   
-  ## output :  datatable from forecast dataframe --------------------
+  ## output: datatable from forecast dataframe----
   output$data <- renderDataTable({
-    # req(logistic_check()!="error")
     DT::datatable(forecast(), 
                   options = list(scrollX = TRUE, pageLength = 5)) %>% 
       formatRound(columns = 2:17, digits = 4)
   })
   
-  ## download button ----------------
+  ## download button----
   output$dw_button <- renderUI({
     req(forecast())
     downloadButton('downloadData', 'Download Data',
@@ -263,30 +215,21 @@ server <- function(input, output, session) {
     }
   )
   
-  ## output:  plot forecast -------------
+  ## output: plot forecast----
   output$ts_plot <- renderPlot({
-    # req(logistic_check()!="error")
     g <- plot(p_model(), forecast())
-    g + theme_minimal() + expand_limits(y = 0)
+    g + expand_limits(y = 0)
   })
   
-  ## output:plot prophet components --------------
+  ## output: plot prophet components----
   output$prophet_comp_plot <- renderPlot({
-    # req(logistic_check()!="error")
     prophet_plot_components(p_model(), forecast(), 
-                            yearly_start = 31 + 28 + 31)
+                            yearly_start = 31 + 28 + 31) # Start at April 1st
   })
   
-  ## error msg for main dataset------------------------
+  ## error msg for main dataset----
   output$msg_main_data <- renderUI({
     if (c(date_col, y_col) %in% names(dat()) %>% mean != 1)
       "Invalid Input: dataframe should have at least two columns named (ds & y)"
   })
-  
-  ## error msg for holidays ------------------------
-  # output$msg_holidays <- renderUI({
-  #   if (c("ds","holiday") %in% names(holidays_upload()) %>% mean != 1)
-  #     "Invalid Input: dataframe should have at least two columns named (ds & holiday)"
-  # })
-  
 }

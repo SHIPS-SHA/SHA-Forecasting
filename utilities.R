@@ -24,6 +24,14 @@ dynamic_filter <- function(df, variables, conditions){
   dplyr::filter(df, !!!filter_conditions)
 }
 
+duplicatedReactive <- function(signal){
+  values <- reactiveValues(val = "")
+  observe({
+    values$val <- signal()
+  })
+  reactive(values$val)
+}
+
 # Config parameters----
 # Date-time formats to try on data
 datetime_formats <- c(

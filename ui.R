@@ -16,19 +16,18 @@ library(readr)
 ui <- dashboardPage(
   dashboardHeader(title = "SHA-Forecasting Tool"),
   
-  ## Sidebar ------------------------------------
+  ## Sidebar----
   dashboardSidebar(
     sidebarMenu(
       menuItem("About", tabName = "About"),
       menuItem("Forecasting Tool", tabName = "Forecast")
     )
   ),
-  
-  ## Body ------------------------------------
+  ## Body----
   dashboardBody(
-    ### include css file --------------------
+    ### include css file----
     tags$head(tags$style(includeCSS("./www/style.css"))),
-    ### include script with function openTab----------------------
+    ### include script with function openTab----
     tags$script(HTML("var openTab = function(tabName){$('a', $('.sidebar')).each(function() {
                      if(this.getAttribute('data-value') == tabName) {
                      this.click()
@@ -36,12 +35,12 @@ ui <- dashboardPage(
                      });
                      }
                      ")),
-    ### use shinyjs -----------------------
+    ### use shinyjs----
     useShinyjs(),
     
-    ## Tab Items ---------------------------
+    ## Tab Items----
     tabItems(
-      ### ABout ----------------------------
+      ### About----
       tabItem(tabName = "About",
               fluidRow(
                 box(width = 12,
@@ -59,18 +58,17 @@ ui <- dashboardPage(
                 
               )
       ),
-      ### Prophet ----------------------------
+      ### Prophet----
       tabItem(tabName = "Forecast",
               fluidRow(
                 box(width = 12,
                     tabsetPanel(id = "inTabset",
-                                ## TAB 1 : Upload Data --------------------------
+                                ## TAB 1: Upload Data----
                                 tabPanel(title = "Upload Data", value = "panel1",
                                          
                                          fluidRow(
-                                           ## upload main dataset -----------------
+                                           ## upload main dataset----
                                            column(width = 6,
-                                                  # column(width = 12,
                                                   tags$h4("Main Dataset"),
                                                   helpText("One column should contain the date information"),
                                                   fileInput("ts_file","Upload CSV File",
@@ -87,7 +85,7 @@ ui <- dashboardPage(
                                                   uiOutput("msg_main_data")
                                                   
                                            ),
-                                           ## predict parameters --------------------
+                                           ## predict parameters----
                                            column(width = 6,
                                                   tags$h3("Select Columns:"),
                                                   fluidRow(
@@ -115,96 +113,17 @@ ui <- dashboardPage(
                                                                 value = TRUE)
                                            )
                                          ),
-                                         ## Next 1 ---------------
+                                         ## Next 1----
                                          fluidRow(
                                            column(width = 2, offset = 10,
                                                   shinyjs::disabled(actionButton("next1", "Next",
                                                                                  style = "width:100%; font-size:200%"))))
                                 ),
-                                ## TAB 2 : Set Parameters -----------------------------------
+                                ## TAB 2: Set Filters----
                                 tabPanel(title = "Select Filters", value = "panel2",
-                                         fluidRow(id = "placeholder"
-                                           # column(width = 12,
-                                           #        tags$div(id = 'placeholder'))
-                                           # column(width = 12, 
-                                           #        uiOutput("SiteFilter"))
-                                           # column(width = 12,
-                                           #        column(width = 9, 
-                                           #               offset = 6,
-                                           #               tags$h3("Prophet Parameters")),
-                                           #        column(width = 6,
-                                           #               radioButtons("growth",
-                                           #                            "growth",
-                                           #                            c('linear',
-                                           #                              'logistic'), 
-                                           #                            inline = TRUE),
-                                           #               
-                                           #               ### parameter: yearly.seasonality
-                                           #               checkboxInput("yearly",
-                                           #                             "yearly.seasonality", 
-                                           #                             value = TRUE),
-                                           #               
-                                           #               ### parameter: weekly.seasonality 
-                                           #               checkboxInput("monthly",
-                                           #                             "weekly.seasonality", 
-                                           #                             value = TRUE),
-                                           #               ### parameter: n.changepoints
-                                           #               numericInput("n.changepoints",
-                                           #                            "n.changepoints", 
-                                           #                            value = 25),
-                                           #               
-                                           #               ### parameter: seasonality.prior.scale
-                                           #               numericInput("seasonality_scale",
-                                           #                            "seasonality.prior.scale", 
-                                           #                            value = 10),
-                                           #               
-                                           #               ### parameter: changepoint.prior.scale
-                                           #               numericInput("changepoint_scale",
-                                           #                            "changepoint.prior.scale", 
-                                           #                            value = 0.05, 
-                                           #                            step = 0.01)),
-                                           #        column(width = 6,
-                                           #               
-                                           #               ### parameter: holidays.prior.scale
-                                           #               numericInput("holidays_scale",
-                                           #                            "holidays.prior.scale", 
-                                           #                            value = 10),
-                                           #               
-                                           #               ### parameter: mcmc.samples
-                                           #               numericInput("mcmc.samples", 
-                                           #                            "mcmc.samples", 
-                                           #                            value = 0),
-                                           #               
-                                           #               ### parameter: interval.width
-                                           #               numericInput("interval.width", 
-                                           #                            "interval.width", 
-                                           #                            value = 0.8, 
-                                           #                            step = 0.1),
-                                           #               ### parameter: uncertainty.samples
-                                           #               numericInput("uncertainty.samples",
-                                           #                            "uncertainty.samples", 
-                                           #                            value = 1000))
-                                           #        
-                                           # ) ,
-                                           # ## predict parameters --------------------
-                                           # column(width = 4,
-                                           #        tags$h3("Predict Parameters"),
-                                           #        ### paramater: periods
-                                           #        numericInput("periods",
-                                           #                     "periods",
-                                           #                     value = 365),
-                                           #        ### parameter: freq
-                                           #        selectInput("freq","freq",
-                                           #                    choices = c('day', 'week', 'month', 
-                                           #                                'quarter','year')),
-                                           #        ### parameter: include_history
-                                           #        checkboxInput("include_history",
-                                           #                      "include_history", 
-                                           #                      value = TRUE)
-                                           # )
-                                         )
+                                         fluidRow(id = "placeholder")
                                          ,
-                                         ## Back/Next 2 --------------------------
+                                         ## Back/Next 2----
                                          fluidRow(
                                            column(width = 2, 
                                                   actionButton("back2", "Back",
@@ -214,10 +133,9 @@ ui <- dashboardPage(
                                                                style = "width:100%; font-size:200%"))
                                          )
                                 ),
-                                ## TAB 3 : Fit Prophet Model ----------------------
+                                ## TAB 3: Fit Prophet Model----
                                 tabPanel(title = "Fit Forecasting Model", value = "panel3", 
                                          fluidRow(
-                                           # box(width = 12, 
                                            column(width = 12,
                                                   shinyjs::disabled(actionButton("plot_btn2", 
                                                                                  "Fit Forecasting Model",
@@ -225,7 +143,7 @@ ui <- dashboardPage(
                                                   )
                                            )
                                          ),
-                                         ## Plots Box : collapsible ------------------
+                                         ## Plots Box: collapsible----
                                          fluidRow( 
                                            conditionalPanel("input.plot_btn2",
                                                             box(width = 12, collapsible = TRUE, 
@@ -236,18 +154,16 @@ ui <- dashboardPage(
                                                                            div(id = "output-container",
                                                                                withSpinner(plotOutput("ts_plot"))
                                                                            )
-                                                                           # )
                                                                            
                                                                   ),
                                                                   tabPanel("Prophet Plot Components",
-                                                                           # output.logistic_check=='no_error'
                                                                            conditionalPanel("input.plot_btn2",
                                                                                             div(id = "output-container",
                                                                                                 plotOutput("prophet_comp_plot"))
                                                                            )
                                                                   )
                                                                 )))),
-                                         ## Results Box : collapsible ------------------
+                                         ## Results Box: collapsible----
                                          fluidRow(
                                            conditionalPanel("input.plot_btn2",
                                                             box(width = 12, collapsible = TRUE, 
@@ -260,7 +176,7 @@ ui <- dashboardPage(
                                                                 )
                                                             )
                                            )),
-                                         ## back 3 ------------
+                                         ## back 3----
                                          fluidRow(
                                            column(width = 2, 
                                                   actionButton("back3", "Back",
@@ -269,7 +185,6 @@ ui <- dashboardPage(
                                 )
                     )
                 )
-                
-              )))
+                )))
   )
 )
